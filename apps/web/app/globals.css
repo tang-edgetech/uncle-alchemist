@@ -1,0 +1,43 @@
+@import "tailwindcss";
+
+@theme {
+  --color-cream: #fff6e2;
+  --color-ink: #3e2615;
+  --color-parchment: #fff4da;
+  --color-wood-dark: #3e2615;
+  --color-table: #123a3d;
+  --color-gold-light: #ffe7a8;
+  --color-gold-mid: #e6c27a;
+  --color-mist: #cfe0db;
+  --font-display: var(--font-fredoka), ui-rounded, system-ui, sans-serif;
+  --font-sans: var(--font-nunito), system-ui, sans-serif;
+}
+
+@utility bg-gold {
+  background-image: linear-gradient(150deg, #ffe9a6 0%, #d9a443 30%, #8c5a1c 65%, #e7b455 100%);
+}
+
+@utility text-gold-shadow {
+  text-shadow: 0 3px 0 #6b4512, 0 6px 14px rgba(0, 0, 0, 0.5);
+}
+
+html {
+  color-scheme: dark;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  background-color: var(--color-table);
+  background-image: repeating-radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.045) 0 5px, rgba(255, 255, 255, 0) 5px 12px);
+  background-size: 96px 96px;
+  color: var(--color-cream);
+  font-family: var(--font-sans);
+}
+
+button {
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: default;
+}
