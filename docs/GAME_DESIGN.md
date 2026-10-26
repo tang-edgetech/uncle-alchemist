@@ -99,10 +99,14 @@ Defined in `apps/web/lib/game/stages.ts`. The prototype has 10 stages per world 
 
 ### 5.2 Survival
 
-- Endless chain of generated puzzles: 3 at 4×4, then 3 at 5×5, then 3 at 6×6, then 7×7 forever.
-- One shared countdown starts at 3:00. Each solve adds time (+45s / +60s / +90s / +120s by size).
-- 3 lives. A rule-breaking placement costs a life and 10 seconds.
-- Score = Σ (N² × 10) per solved puzzle + remaining-time bonus. Personal best plus a global top 100.
+Rules live in `apps/web/lib/game/survival.ts`; route `/play/survival`.
+
+- **Unlock:** opens together with World 2 (12 ★ in World 1).
+- Endless chain of puzzles drawn from the frame templates with a random element swap: 3 at 4×4, then 3 at 5×5, then 3 at 6×6, then 7×7 forever.
+- One shared countdown starts at 3:00 and only runs while a puzzle is being played (paused, hidden tab and the 1.6 s "Solved!" break do not count). Each solve adds time: +45 s / +60 s / +90 s / +120 s by size.
+- 3 lives. A rule-breaking placement (or a full board that is wrong) costs a life and 10 seconds.
+- Points per solve = N² × 10 + speed bonus, where the speed bonus is the seconds left under par (par 60 / 120 / 180 / 300 s by size).
+- The run ends when the clock hits 0 or lives run out. The best result (score, then puzzles solved) is kept on the device; abandoning a run from the menu does not save it. Global top 100 comes with the backend.
 
 ## 6. In-game controls
 
@@ -114,7 +118,20 @@ Defined in `apps/web/lib/game/stages.ts`. The prototype has 10 stages per world 
 
 ## 7. Options
 
-Music volume · SFX volume · Language (EN / 中文) · Highlight rule conflicts · Show timer · Input mode (tap / drag) · Vibration (mobile) · Reduce motion · Account (sign in, sign out, reset progress, delete account).
+Route `/options`, also opened from the pause screen during a game (without the reset button). Saved on the device.
+
+| Option | Default | Effect |
+|---|---|---|
+| Language | English | English / 中文 |
+| Sound effects | 70% | Volume of the generated sound effects (place, erase, note, mistake, solve, game over). 0 = off |
+| Highlight rule conflicts | On | Red ring on clashing elements. Mistakes still count when off |
+| Highlight matching elements | On | Ring every copy of the selected element |
+| Show timer | On | Stage clock in the header. Survival always shows its countdown |
+| Vibration | On | Buzz on mistakes and game over (phones that support it) |
+| Reduce motion | Off | Turns off bouncing/sliding animations |
+| Reset all progress | — | Confirm dialog, then deletes stars, best times and the Survival best |
+
+Later: music volume (needs audio files), account (sign in, sign out, delete account).
 
 ## 8. Accounts and saving
 

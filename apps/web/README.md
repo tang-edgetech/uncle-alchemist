@@ -21,7 +21,9 @@ Next.js 16 (App Router) + Tailwind 4 + Motion + Zustand. Phase 1 prototype: ever
 | `/stages` | World map (locked worlds need stars from the previous one) |
 | `/stages/[1-4]` | Stage list for a world |
 | `/play/[world-stage]` | Game, e.g. `/play/2-05` |
+| `/play/survival` | Survival run (unlocks with World 2) |
 | `/recipes` | Recipe book, one chapter per world |
+| `/options` | Options (also in-game from the pause screen) |
 
 Progress lives in `localStorage` (`uncle-alchemist-progress`). Remove that key to start over.
 

@@ -6,6 +6,8 @@ import { GoldButton } from "@/components/ui/GoldButton";
 import { GoldFrame } from "@/components/ui/GoldFrame";
 import { Medallion } from "@/components/ui/Medallion";
 import { BASE_ELEMENTS } from "@/lib/game/elements";
+import { isSurvivalUnlocked, SURVIVAL_UNLOCK_WORLD_ID, WORLDS } from "@/lib/game/stages";
+import { useProgressStore } from "@/lib/stores/progressStore";
 import type { BaseKey } from "@/lib/game/types";
 import { useT } from "@/lib/i18n/translate";
 import { LanguageToggle } from "./LanguageToggle";
@@ -14,6 +16,10 @@ const HERO_ELEMENTS: BaseKey[] = ["wind", "water", "soil", "fire"];
 
 export function LandingScreen() {
   const t = useT();
+  const hydrated = useProgressStore((state) => state.hydrated);
+  const stars = useProgressStore((state) => state.stars);
+  const survivalOpen = hydrated && isSurvivalUnlocked(stars);
+  const unlockWorld = WORLDS.find((world) => world.id === SURVIVAL_UNLOCK_WORLD_ID);
 
   return (
     <main className="mx-auto flex min-h-dvh w-full max-w-[520px] flex-col items-center gap-8 px-4 pb-10 pt-4">
@@ -44,23 +50,26 @@ export function LandingScreen() {
           <GameIcon name="book" className="h-5 w-5" />
           {t("menu.recipeBook")}
         </GoldButton>
-        <div className="relative">
-          <GoldButton variant="secondary" disabled className="w-full">
+        {survivalOpen ? (
+          <GoldButton href="/play/survival" variant="secondary">
+            <GameIcon name="hourglass" className="h-5 w-5" />
             {t("menu.survival")}
           </GoldButton>
-          <span className="absolute -right-2 -top-2 rounded-full bg-[#B8340F] px-2 py-0.5 text-xs font-bold text-white shadow">
-            {t("menu.comingSoon")}
-          </span>
-        </div>
-        <div className="relative">
-          <GoldButton variant="secondary" disabled className="w-full">
-            <GameIcon name="lock" className="h-5 w-5" />
-            {t("menu.options")}
-          </GoldButton>
-          <span className="absolute -right-2 -top-2 rounded-full bg-[#B8340F] px-2 py-0.5 text-xs font-bold text-white shadow">
-            {t("menu.comingSoon")}
-          </span>
-        </div>
+        ) : (
+          <div className="flex flex-col items-center gap-1">
+            <GoldButton variant="secondary" disabled className="w-full">
+              <GameIcon name="lock" className="h-5 w-5" />
+              {t("menu.survival")}
+            </GoldButton>
+            {hydrated && unlockWorld && (
+              <span className="text-xs text-mist">{t("menu.survivalLocked", { world: t(`world.${unlockWorld.key}`) })}</span>
+            )}
+          </div>
+        )}
+        <GoldButton href="/options" variant="secondary">
+          <GameIcon name="gear" className="h-5 w-5" />
+          {t("menu.options")}
+        </GoldButton>
       </GoldFrame>
 
       <p className="max-w-sm text-center text-sm text-mist">{t("menu.prototypeNote")}</p>

@@ -56,6 +56,13 @@ export function isWorldUnlocked(world: World, stars: StarRecord): boolean {
   return isWorldUnlocked(previous, stars) && worldStars(previous, stars) >= world.starsToUnlock;
 }
 
+export const SURVIVAL_UNLOCK_WORLD_ID = 2;
+
+export function isSurvivalUnlocked(stars: StarRecord): boolean {
+  const world = WORLDS.find((candidate) => candidate.id === SURVIVAL_UNLOCK_WORLD_ID);
+  return world ? isWorldUnlocked(world, stars) : true;
+}
+
 export function isStageUnlocked(id: string, stars: StarRecord): boolean {
   const parsed = parseStageId(id);
   if (!parsed || !isWorldUnlocked(parsed.world, stars)) return false;

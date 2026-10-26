@@ -1,8 +1,8 @@
 "use client";
 
-import { AnimatePresence, motion } from "motion/react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { OptionsModal } from "@/components/features/options/OptionsModal";
 import { GoldButton } from "@/components/ui/GoldButton";
 import { GoldFrame } from "@/components/ui/GoldFrame";
 import { RoundIconButton } from "@/components/ui/RoundIconButton";
@@ -10,14 +10,20 @@ import { formatClock, starsFor } from "@/lib/game/scoring";
 import { isStageUnlocked, isWorldUnlocked, nextStageId, parseStageId, stagePuzzle, WORLDS, type World } from "@/lib/game/stages";
 import { useGameClock } from "@/lib/hooks/useGameClock";
 import { useGameKeyboard } from "@/lib/hooks/useGameKeyboard";
+import { useGameSounds } from "@/lib/hooks/useGameSounds";
 import { useT } from "@/lib/i18n/translate";
 import { useGameStore } from "@/lib/stores/gameStore";
 import { useProgressStore } from "@/lib/stores/progressStore";
+import { useSettingsStore } from "@/lib/stores/settingsStore";
 import { Board } from "./Board";
 import { DragLayer } from "./DragLayer";
 import { ElementPalette } from "./ElementPalette";
+import { FloatingBanner } from "./FloatingBanner";
 import { GameDialog } from "./GameDialog";
+import { GameTools } from "./GameTools";
+import { PausedBoard } from "./PausedBoard";
 import { RecipePeek } from "./RecipePeek";
+import { StatPill, type Stat } from "./StatPill";
 import { WinDialog } from "./WinDialog";
 
 const FEEDBACK_MS = 2600;
@@ -28,6 +34,7 @@ export function GameScreen({ stageId }: { stageId: string }) {
   const t = useT();
   const router = useRouter();
   const [confirm, setConfirm] = useState<PendingConfirm>(null);
+  const [optionsOpen, setOptionsOpen] = useState(false);
   const [unlockedWorld, setUnlockedWorld] = useState<{ stageId: string; world: World } | null>(null);
 
   const parsed = parseStageId(stageId);
@@ -38,15 +45,15 @@ export function GameScreen({ stageId }: { stageId: string }) {
   const hydrated = useProgressStore((state) => state.hydrated);
   const stars = useProgressStore((state) => state.stars);
   const unlocked = isStageUnlocked(stageId, stars);
+  const showTimer = useSettingsStore((state) => state.showTimer);
 
   const puzzle = useGameStore((state) => state.puzzle);
   const status = useGameStore((state) => state.status);
   const mistakes = useGameStore((state) => state.mistakes);
   const elapsedMs = useGameStore((state) => state.elapsedMs);
-  const notesMode = useGameStore((state) => state.notesMode);
   const canUndo = useGameStore((state) => state.history.length > 0);
   const feedback = useGameStore((state) => state.feedback);
-  const { start, pause, resume, reset, undo, erase, toggleNotesMode, clearFeedback } = useGameStore.getState();
+  const { start, pause, resume, reset, clearFeedback } = useGameStore.getState();
 
   const ready = puzzle !== null && puzzle.stageId === stageId;
   const seconds = Math.floor(elapsedMs / 1000);
@@ -81,9 +88,9 @@ export function GameScreen({ stageId }: { stageId: string }) {
   }, [feedback, clearFeedback]);
 
   useGameClock();
-  useGameKeyboard(ready && confirm === null && playing);
+  useGameSounds();
+  useGameKeyboard(ready && confirm === null && !optionsOpen && playing);
 
-  const replay = () => reset();
   const askQuit = () => (canUndo && status !== "won" ? setConfirm("quit") : router.push(stagesHref));
   const confirmAction = () => {
     if (confirm === "reset") reset();
@@ -93,6 +100,10 @@ export function GameScreen({ stageId }: { stageId: string }) {
 
   const next = nextStageId(stageId);
   const nextHref = next && isStageUnlocked(next, stars) ? `/play/${next}` : undefined;
+  const stats: Stat[] = [
+    ...(showTimer ? [{ label: t("game.time"), value: formatClock(seconds) }] : []),
+    { label: t("game.mistakes"), value: mistakes },
+  ];
 
   if (hydrated && !unlocked) {
     return (
@@ -112,19 +123,7 @@ export function GameScreen({ stageId }: { stageId: string }) {
     <main className="mx-auto flex min-h-dvh w-full max-w-[560px] flex-col items-center gap-3 px-3 pb-4 pt-3">
       <header className="flex w-full items-center justify-between gap-2">
         <RoundIconButton icon="back" label={t("game.menu")} onClick={askQuit} />
-        <div className="flex items-center gap-3 rounded-full bg-gold p-[3px] shadow-[0_3px_0_#4A2F0C]">
-          <div className="flex items-center gap-4 rounded-full bg-[linear-gradient(180deg,#5A3A22,#3E2615)] px-4 py-1.5 text-cream">
-            <span className="flex flex-col items-center leading-none">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-gold-mid">{t("game.time")}</span>
-              <span className="font-display text-lg font-bold tabular-nums">{formatClock(seconds)}</span>
-            </span>
-            <span className="h-7 w-px bg-[#8C5A1C]" />
-            <span className="flex flex-col items-center leading-none">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-gold-mid">{t("game.mistakes")}</span>
-              <span className="font-display text-lg font-bold tabular-nums">{mistakes}</span>
-            </span>
-          </div>
-        </div>
+        <StatPill stats={stats} />
         <div className="flex gap-2">
           <RoundIconButton
             icon={status === "paused" ? "play" : "pause"}
@@ -141,29 +140,9 @@ export function GameScreen({ stageId }: { stageId: string }) {
       </p>
 
       <section className="relative w-full" style={{ maxWidth: "max(280px, calc(100dvh - 350px))" }}>
-        <AnimatePresence>
-          {feedback === "notQuite" && (
-            <motion.p
-              role="status"
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              className="absolute inset-x-6 -top-1 z-40 rounded-full bg-[#B8340F] px-4 py-2 text-center text-sm font-bold text-white shadow-lg"
-            >
-              {t("game.notQuite")}
-            </motion.p>
-          )}
-        </AnimatePresence>
+        <FloatingBanner message={feedback === "notQuite" ? t("game.notQuite") : null} tone="danger" />
         {ready && status !== "paused" && <Board />}
-        {ready && status === "paused" && (
-          <div className="flex aspect-square w-full items-center justify-center rounded-[22px] bg-gold p-[7px] shadow-[0_6px_0_#4A2F0C,0_16px_30px_rgba(0,0,0,0.5)]">
-            <div className="flex h-full w-full flex-col items-center justify-center gap-4 rounded-[16px] bg-[linear-gradient(180deg,#5A3A22,#3E2615)] p-6 text-center text-cream">
-              <h2 className="font-display text-3xl font-bold text-gold-light">{t("game.paused")}</h2>
-              <p className="max-w-60 text-sm text-mist">{t("game.pausedHint")}</p>
-              <GoldButton onClick={resume}>{t("game.resume")}</GoldButton>
-            </div>
-          </div>
-        )}
+        {ready && status === "paused" && <PausedBoard onResume={resume} onOptions={() => setOptionsOpen(true)} />}
         {!ready && <div className="aspect-square w-full animate-pulse rounded-[22px] bg-black/20" />}
       </section>
 
@@ -173,18 +152,7 @@ export function GameScreen({ stageId }: { stageId: string }) {
         <ElementPalette />
       </div>
 
-      <div className="flex w-full items-start justify-center gap-8">
-        <RoundIconButton icon="undo" label={t("game.undo")} onClick={undo} disabled={!playing || !canUndo} showLabel />
-        <RoundIconButton icon="erase" label={t("game.erase")} onClick={erase} disabled={!playing} showLabel />
-        <RoundIconButton
-          icon="notes"
-          label={notesMode ? t("game.notesOn") : t("game.notes")}
-          onClick={toggleNotesMode}
-          active={notesMode}
-          disabled={!playing}
-          showLabel
-        />
-      </div>
+      <GameTools />
 
       <GameDialog
         open={confirm !== null}
@@ -202,6 +170,8 @@ export function GameScreen({ stageId }: { stageId: string }) {
         <p className="text-sm text-[#5A3A22]">{confirm === "quit" ? t("game.quitBody") : t("game.resetBody")}</p>
       </GameDialog>
 
+      <OptionsModal open={optionsOpen} onClose={() => setOptionsOpen(false)} />
+
       <DragLayer />
 
       <WinDialog
@@ -211,7 +181,7 @@ export function GameScreen({ stageId }: { stageId: string }) {
         mistakes={mistakes}
         notice={newWorld ? t("game.worldUnlocked", { world: t(`world.${newWorld.key}`) }) : undefined}
         nextHref={nextHref}
-        onReplay={replay}
+        onReplay={reset}
         menuHref={stagesHref}
       />
     </main>

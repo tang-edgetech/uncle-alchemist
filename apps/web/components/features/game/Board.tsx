@@ -8,6 +8,7 @@ import { EMPTY } from "@/lib/game/types";
 import { useT, type TranslationKey } from "@/lib/i18n/translate";
 import { useDragStore } from "@/lib/stores/dragStore";
 import { useGameStore } from "@/lib/stores/gameStore";
+import { useSettingsStore } from "@/lib/stores/settingsStore";
 import { BoardCell } from "./BoardCell";
 
 const CAGE_INSET = 0.04;
@@ -36,6 +37,8 @@ export function Board() {
   const selected = useGameStore((state) => state.selected);
   const select = useGameStore((state) => state.select);
   const dropCell = useDragStore((state) => (state.value !== null ? state.overCell : null));
+  const highlightConflicts = useSettingsStore((state) => state.highlightConflicts);
+  const highlightSame = useSettingsStore((state) => state.highlightSame);
 
   const lines = useMemo(() => (puzzle ? gridLines(puzzle.size, puzzle.regions) : null), [puzzle]);
   const cageShapes = useMemo<CageShape[]>(
@@ -102,8 +105,8 @@ export function Board() {
                 given={puzzle.givens[cell] !== EMPTY}
                 selected={selected === cell}
                 peer={peers.has(cell)}
-                sameValue={selectedValue !== EMPTY && value === selectedValue && selected !== cell}
-                conflict={conflicts.has(cell)}
+                sameValue={highlightSame && selectedValue !== EMPTY && value === selectedValue && selected !== cell}
+                conflict={highlightConflicts && conflicts.has(cell)}
                 dropTarget={dropCell === cell}
                 cageCompound={compoundOf(cell)}
                 label={labelFor(cell)}

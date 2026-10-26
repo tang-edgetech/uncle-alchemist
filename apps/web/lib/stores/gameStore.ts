@@ -32,6 +32,7 @@ interface GameState {
   reset: () => void;
   pause: () => void;
   resume: () => void;
+  stop: () => void;
   tick: (deltaMs: number) => void;
   toggleNotesMode: () => void;
   clearFeedback: () => void;
@@ -175,6 +176,11 @@ export const useGameStore = create<GameState>()((set, get) => ({
 
   resume: () => {
     if (get().status === "paused") set({ status: "playing" });
+  },
+
+  stop: () => {
+    const { status } = get();
+    if (status === "playing" || status === "paused") set({ status: "idle", selected: null });
   },
 
   tick: (deltaMs) => {

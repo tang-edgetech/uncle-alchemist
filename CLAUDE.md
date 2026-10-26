@@ -53,11 +53,11 @@ Game rules, elements and modes live in `docs/GAME_DESIGN.md`.
 
 | Route | Purpose |
 |---|---|
-| `/` | Landing: Play Stages · Survival · Codex · Options · Account |
+| `/` | Landing: Play Stages · Recipe Book · Survival · Options · (Account later) |
 | `/stages`, `/stages/[world]` | World map and stage select |
-| `/play/stage/[stageId]` | Stage game screen |
+| `/play/[stageId]` | Stage game screen, e.g. `/play/2-05` |
 | `/play/survival` | Survival run |
-| `/codex` | Discovered compounds |
+| `/recipes` | Recipe book (one chapter per world) |
 | `/options` | Settings (also available as an in-game modal) |
 | `/login`, `/register`, `/forgot-password` | Account |
 | `/admin/*` | Back office (2-hour idle timeout applies here only) |
